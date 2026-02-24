@@ -80,14 +80,41 @@ ext-theme-cycler:
 # Open pi with one or more stacked extensions in a new terminal: just open minimal tool-counter
 open +exts:
     #!/usr/bin/env bash
+    set -e
+
     args=""
     for ext in {{exts}}; do
         args="$args -e extensions/$ext.ts"
     done
-    cmd="cd '{{justfile_directory()}}' && pi$args"
-    escaped="${cmd//\\/\\\\}"
-    escaped="${escaped//\"/\\\"}"
-    osascript -e "tell application \"Terminal\" to do script \"$escaped\""
+    cmd="cd '{{justfile_directory()}}' && source .env 2>/dev/null; pi$args"
+
+    case "$(uname -s)" in
+        Darwin)
+            # macOS - use osascript
+            escaped="${cmd//\\/\\\\}"
+            escaped="${escaped//\"/\\\"}"
+            osascript -e "tell application \"Terminal\" to do script \"$escaped\""
+            ;;
+        Linux)
+            # Linux - detect available terminal
+            for term in ghostty kitty alacritty konsole gnome-terminal; do
+                if command -v "$term" &>/dev/null; then
+                    case "$term" in
+                        ghostty)  ghostty -e bash -c "$cmd" & ;;
+                        kitty)    kitty bash -c "$cmd" & ;;
+                        alacritty) alacritty -e bash -c "$cmd" & ;;
+                        konsole)  konsole -e bash -c "$cmd" & ;;
+                        gnome-terminal) gnome-terminal -- bash -c "$cmd" & ;;
+                    esac
+                    break
+                fi
+            done
+            ;;
+        *)
+            echo "Unsupported OS: $(uname -s)"
+            exit 1
+            ;;
+    esac
 
 # Open every extension in its own terminal window
 all:
