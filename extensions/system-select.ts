@@ -1,8 +1,9 @@
 /**
  * System Select — Switch the system prompt via /system
  *
- * Scans .pi/agents/, .claude/agents/, .gemini/agents/, .codex/agents/
+ * Scans .pi/agents/, .claude/agents/, .gemini/agents/, .codex/agents/, .opencode/agents/
  * (project-local and global) for agent definition .md files.
+ * Also scans ~/.config/opencode/agents/ (OpenCode's XDG path).
  *
  * /system opens a select dialog to pick a system prompt. The selected
  * agent's body is prepended to Pi's default instructions so tool usage
@@ -79,10 +80,12 @@ export default function (pi: ExtensionAPI) {
 			[join(cwd, ".claude", "agents"), ".claude"],
 			[join(cwd, ".gemini", "agents"), ".gemini"],
 			[join(cwd, ".codex", "agents"), ".codex"],
+			[join(cwd, ".opencode", "agents"), ".opencode"],
 			[join(home, ".pi", "agent", "agents"), "~/.pi"],
 			[join(home, ".claude", "agents"), "~/.claude"],
 			[join(home, ".gemini", "agents"), "~/.gemini"],
 			[join(home, ".codex", "agents"), "~/.codex"],
+			[join(home, ".config", "opencode", "agents"), "~/.config/opencode"],
 		];
 
 		const seen = new Set<string>();

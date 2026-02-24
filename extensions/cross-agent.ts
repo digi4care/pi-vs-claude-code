@@ -1,10 +1,12 @@
 /**
  * Cross-Agent — Load commands, skills, and agents from other AI coding agents
  *
- * Scans .claude/, .gemini/, .codex/ directories (project + global) for:
+ * Scans .claude/, .gemini/, .codex/, .opencode/ directories (project + global) for:
  *   commands/*.md  → registered as /name
  *   skills/        → listed as /skill:name (discovery only)
  *   agents/*.md    → listed as @name (discovery only)
+ *
+ * Also scans ~/.config/opencode/ (OpenCode's XDG path)
  *
  * Usage: pi -e extensions/cross-agent.ts
  */
@@ -134,7 +136,7 @@ export default function (pi: ExtensionAPI) {
 		applyExtensionDefaults(import.meta.url, ctx);
 		const home = homedir();
 		const cwd = ctx.cwd;
-		const providers = ["claude", "gemini", "codex"];
+		const providers = ["claude", "gemini", "codex", "opencode"];
 		const groups: SourceGroup[] = [];
 
 		for (const p of providers) {
@@ -150,6 +152,15 @@ export default function (pi: ExtensionAPI) {
 					groups.push({ source: label, commands, skills, agents });
 				}
 			}
+		}
+
+		// Also scan ~/.config/opencode/ (OpenCode's XDG path)
+		const opencodeConfigDir = join(home, ".config", "opencode");
+		const opencodeCommands = scanCommands(join(opencodeConfigDir, "commands"));
+		const opencodeSkills = scanSkills(join(opencodeConfigDir, "skills"));
+		const opencodeAgents = scanAgents(join(opencodeConfigDir, "agents"));
+		if (opencodeCommands.length || opencodeSkills.length || opencodeAgents.length) {
+			groups.push({ source: "~/.config/opencode", commands: opencodeCommands, skills: opencodeSkills, agents: opencodeAgents });
 		}
 
 		// Also scan .pi/agents/ (pi-vs-cc pattern)
